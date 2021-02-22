@@ -74,17 +74,37 @@ public class Bot extends TelegramLongPollingBot {
 			String call_data = update.getCallbackQuery().getData();
 			long message_id = update.getCallbackQuery().getMessage().getMessageId();
 			long chat_id = update.getCallbackQuery().getMessage().getChatId();
-
-			if (call_data.equals("update_ambassador") || call_data.equals("update_greeter")) {
-				String answer = "Applied successfully";
-				EditMessageText new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id)
-						.setText(answer);
+			String answer = "";
+			EditMessageText new_message;
+			switch (call_data) {
+			case "update_ambassador":
+				answer = "Applied successfully: Ambassador";
+				new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id).setText(answer);
+				try {
+					execute(new_message);
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+				break;
+			case "update_greeter":
+				answer = "Applied successfully: Greeter";
+				new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id).setText(answer);
+				try {
+					execute(new_message);
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+				break;
+			default:
+				answer = "Invalid choice! Try again";
+				new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id).setText(answer);
 				try {
 					execute(new_message);
 				} catch (TelegramApiException e) {
 					e.printStackTrace();
 				}
 			}
+
 		}
 	}
 
