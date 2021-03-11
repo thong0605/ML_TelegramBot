@@ -3,26 +3,25 @@ package com.telegrambot;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import com.telegrambot.entity.Bot;
 
 @SpringBootApplication
 public class TelegramBotApplication {
-
 	public static void main(String[] args) {
+		// Initialize Api Context
 		ApiContextInitializer.init();
+
+		// TODO Register our bot
 		try {
-            TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-            telegramBotsApi.registerBot(new Bot());
-//            telegramBotsApi.registerBot(new DirectionsHandlers());
-//            telegramBotsApi.registerBot(new RaeHandlers());
-//            telegramBotsApi.registerBot(new WeatherHandlers());
-//            telegramBotsApi.registerBot(new TransifexHandlers());
-//            telegramBotsApi.registerBot(new FilesHandlers());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
+			// Instantiate Telegram Bots API
+			TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
+			telegramBotsApi.registerBot(new Bot());
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

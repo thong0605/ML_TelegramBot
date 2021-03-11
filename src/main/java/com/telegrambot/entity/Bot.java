@@ -3,111 +3,149 @@ package com.telegrambot.entity;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-import java.awt.Color;
+import com.telegrambot.utils.Buttons;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.api.objects.Audio;
 import org.telegram.telegrambots.api.objects.Chat;
+import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.api.objects.User;
-import org.telegram.telegrambots.api.objects.Voice;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 
 public class Bot extends TelegramLongPollingBot {
 
+	private Buttons button = new Buttons();
+
 	@Override
 	public void onUpdateReceived(Update update) {
+		
+		Message message = update.getMessage();
 
 		// Check if the update has a message and the message has text
-		if (update.hasMessage() && update.getMessage().hasText()) {
+		if (update.hasMessage() && message.hasText()) {
 
-			String message_text = update.getMessage().getText();
-
+			// handleStart(message);
+			
 			long chat_id = update.getMessage().getChatId();
+			String user_fname = update.getMessage().getFrom().getFirstName();
 
-			if (message_text.equals("/start")) {
-				SendMessage message = new SendMessage().setChatId(chat_id)
-						.setText("Choose a position you want to get in:");
-				// Choice's buttons show up
-				InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-				List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-				List<InlineKeyboardButton> rowInline = new ArrayList<>();
-				// Set up position's buttons
-				rowInline.add(new InlineKeyboardButton().setText("Apply as new Ambassador")
-						.setCallbackData("update_ambassador"));
-				rowInline.add(
-						new InlineKeyboardButton().setText("Apply as new Greeter").setCallbackData("update_greeter"));
-
-				// Set the keyboard to the markup
-				rowsInline.add(rowInline);
-
-				// Add it to the message
-				markupInline.setKeyboard(rowsInline);
-				message.setReplyMarkup(markupInline);
-
-				try {
-					execute(message);
-				} catch (TelegramApiException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			} else if (message_text.equals("/myfullname")) {
-				// Test command
-				SendMessage message = new SendMessage();
-				message.setText("Your fullname is: " + update.getMessage().getFrom().getFirstName() + " "
-						+ update.getMessage().getFrom().getLastName());
-			} else {
-				// If the bot get hit up by casual messages. Leave this message
-				SendMessage message = new SendMessage();
-				message.setText("Hi " + update.getMessage().getFrom().getFirstName()
-						+ " .We have received your message, we will reply you soon.");
-			}
-
-		} else if (update.hasCallbackQuery()) {
-			// Get callback data
-			String call_data = update.getCallbackQuery().getData();
-			long message_id = update.getCallbackQuery().getMessage().getMessageId();
-			long chat_id = update.getCallbackQuery().getMessage().getChatId();
-			String answer = "";
-			EditMessageText new_message;
-			switch (call_data) {
-			case "update_ambassador":
-				answer = "Applied successfully: Ambassador";
-				new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id).setText(answer);
-				try {
-					execute(new_message);
-				} catch (TelegramApiException e) {
-					e.printStackTrace();
-				}
+			switch (message.getText()) {
+			case "/start":
+				// Choice's buttons called
+				String message_text = "Hi " + user_fname + ", I'm Tony. Please choose one of two options below. \n"
+						+ "Or type /contact to leave contact information";
+				handleStart(message, message_text);
 				break;
-			case "update_greeter":
-				answer = "Applied successfully: Greeter";
-				new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id).setText(answer);
-				try {
-					execute(new_message);
-				} catch (TelegramApiException e) {
-					e.printStackTrace();
-				}
+			case "Online Assembly Member (Beta)":
+				String apply_admin = "[MundoLingo](https://mundolingo.typeform.com/to/Rg2Snz)";
+				sendMsg(update.getMessage().getChatId(), apply_admin);
+				break;
+			case "Room Keys":
+				String key = "Here's your room keys to our community. \n" + "[Google](https://www.google.com/)";
+				sendMsg(update.getMessage().getChatId(), key);
+				break;
+
+			case "/contact":
+				String contact_message = "Choose one of those below: \n";
+				sendContact(update.getMessage().getChatId(), contact_message);
 				break;
 			default:
-				answer = "Invalid choice! Try again";
-				new_message = new EditMessageText().setChatId(chat_id).setMessageId((int) message_id).setText(answer);
-				try {
-					execute(new_message);
-				} catch (TelegramApiException e) {
-					e.printStackTrace();
-				}
 			}
 
+		} else if (update.getMessage().hasLocation()) {
+			// Sending contact information
+			long chat_id = update.getMessage().getChatId();
+			sendMsg(chat_id, "Your location: " + update.getMessage().getLocation().toString());
+		} else if (update.hasCallbackQuery() && update.getCallbackQuery().getMessage() != null) {
+			// handleQuestionnaire(update);
+			
+		}
+	}
+	
+	// handleStart
+	private void handleStart(Message message, String text) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.enableMarkdown(true);
+        sendMessage.setChatId(message.getChatId().toString());
+        sendMessage.setText(text);
+        sendMessage.setReplyMarkup(button.setButtons("Online Assembly Member (Beta)", "Room Keys"));
+
+        try {
+            sendMessage(sendMessage);
+        } catch (TelegramApiException e) {
+            System.out.println("An error occurred while starting conversation:" + e);
+        }
+    }
+
+	// Send messages
+	@SuppressWarnings("deprecation")
+	public synchronized void sendMsg(long chatId, String text) {
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.enableMarkdown(true);
+		sendMessage.setChatId(chatId);
+		sendMessage.setText(text);
+		try {
+			sendMessage(sendMessage);
+		} catch (TelegramApiException e) {
+			System.out.println("An error occurred while starting conversation:" + e);
 		}
 	}
 
+	@SuppressWarnings("deprecation")
+	public synchronized void sendContact(long chatId, String text) {
+		SendMessage sendMessage = new SendMessage();
+		sendMessage.enableMarkdown(true);
+		sendMessage.setChatId(chatId);
+		sendMessage.setText(text);
+		button.contactButtons(sendMessage);
+		try {
+			sendMessage(sendMessage);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
+	}
+
+	///////////////////////////////////////////
+	@SuppressWarnings("deprecation")
+	public synchronized void answerCallbackQuery(String callbackId, String message) {
+		AnswerCallbackQuery answer = new AnswerCallbackQuery();
+		answer.setCallbackQueryId(callbackId);
+		answer.setText(message);
+		answer.setShowAlert(true);
+		try {
+			answerCallbackQuery(answer);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//questionnaire to be executed
+//	private static final String SEPARATOR = "_";
+//
+//	private InlineKeyboardMarkup getQuestionnaireChoiceKeyboard() {
+//	    InlineKeyboardMarkup replyMarkup = new InlineKeyboardMarkup();
+//	    final List<InlineKeyboardButton> keyboardButtons = new ArrayList<>(availableQuestionnaires.size());
+//
+//	    this.availableQuestionnaires.stream().forEach((questionnaire) -> {
+//	        JSONObject json = new JSONObject();
+//	        json.put("text", questionnaire.getQuestionnaireTitle());
+//	        json.put("callback_data", mapQuestionnaireTitleToIndexId(questionnaire.getQuestionnaireTitle()) + SEPARATOR);
+//	        keyboardButtons.add(new InlineKeyboardButton(json));
+//	    });
+//
+//	    replyMarkup.setKeyboard(Collections.singletonList(keyboardButtons));
+//	    return replyMarkup;
+//	}
+	
 	@Override
 	public String getBotUsername() {
 		// TODO Auto-generated method stub
@@ -117,7 +155,7 @@ public class Bot extends TelegramLongPollingBot {
 	@Override
 	public String getBotToken() {
 		// TODO Auto-generated method stub
-		return "1684647984:AAFQE2vKgbHEc2jSJntkM8WiQIBQeBmb44U";
+		return "1612458854:AAHGdQBqR0whpQfU9V1IeZCN_Zw_Q193K1k";
 	}
 
 }
